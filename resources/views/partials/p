@@ -1,0 +1,390 @@
+@extends('layouts.app')
+
+@section('content')
+<div class="max-w-7xl mx-auto p-4 sm:p-6 bg-white rounded-lg shadow-lg">
+    <h1 class="text-2xl sm:text-3xl font-bold mb-6 text-gray-800">Upload Inventory</h1>
+
+    @if(session('success'))
+        <div class="mb-6 p-4 bg-green-100 text-green-800 rounded border border-green-300">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    <form method="POST" action="{{ route('inventory.upload.process') }}">
+        @csrf
+
+        <div id="products-container" class="space-y-6">
+            <div class="product-item border rounded-lg p-4 sm:p-5 bg-gray-50 shadow-sm" data-index="0">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4">
+
+                    {{-- SKU --}}
+                    <div class="sm:col-span-1 lg:col-span-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">SKU</label>
+                        <div class="flex space-x-2">
+                            <input type="text" name="products[0][sku]" class="sku-input flex-1 border-gray-300 rounded px-3 py-2 text-sm" required>
+                            <button type="button" class="scan-btn bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-2 rounded text-sm" title="Scan Barcode">📷</button>
+                        </div>
+                    </div>
+
+                    {{-- Name --}}
+                    <div class="sm:col-span-1 lg:col-span-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
+                        <input type="text" name="products[0][name]" required class="w-full border-gray-300 rounded px-3 py-2 text-sm">
+                    </div>
+
+                    {{-- Quantity --}}
+                    <div class="sm:col-span-1 lg:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+                        <input type="number" name="products[0][quantity]" class="quantity-input w-full border-gray-300 rounded px-3 py-2 text-sm" min="1" required>
+                    </div>
+
+                    {{-- Unit --}}
+                    <div class="sm:col-span-1 lg:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Unit</label>
+                        <select name="products[0][unit]" class="unit-select w-full border-gray-300 rounded px-3 py-2 text-sm">
+                            <option value="piece" selected>Piece</option>
+                            <option value="dozen">Dozen (12)</option>
+                            <option value="carton">Carton (24)</option>
+                        </select>
+                    </div>
+
+                    {{-- Remove Button --}}
+                 <div class="sm:col-span-2 lg:col-span-1 flex items-end justify-end">
+  <button
+    type="button"
+    class="remove-product bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+    disabled
+    aria-disabled="true"
+  >
+    <span class="hidden sm:inline">
+      <a href="/journal/capital-loan" class="text-white hover:underline">setup</a>
+    </span>
+    <span class="sm:hidden">&times;</span>
+  </button>
+</div>
+
+                    {{-- Bulk Purchase --}}
+                    <div class="sm:col-span-1 lg:col-span-3 bulk-group hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Bulk Purchase Price
+                            <span class="text-xs text-gray-500 bulk-label"></span>
+                        </label>
+                        <input type="text" name="products[0][purchase_price_bulk]" class="bulk-purchase number-input w-full border-gray-300 rounded px-3 py-2 text-sm" placeholder="e.g. 1,200.00">
+                    </div>
+
+                    {{-- Bulk Selling --}}
+                    <div class="sm:col-span-1 lg:col-span-3 bulk-group hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Bulk Selling Price
+                            <span class="text-xs text-gray-500 bulk-label"></span>
+                        </label>
+                        <input type="text" name="products[0][selling_price_bulk]" class="bulk-sell number-input w-full border-gray-300 rounded px-3 py-2 text-sm" placeholder="e.g. 1,500.00">
+                    </div>
+
+                    {{-- Per-piece Purchase --}}
+                    <div class="sm:col-span-1 lg:col-span-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Purchase Price (per piece)</label>
+                        <input type="text" name="products[0][purchase_price]"  class="per-piece-purchase w-full bg-gray-100 border-gray-300 rounded px-3 py-2 text-gray-600 text-sm">
+                    </div>
+
+                    {{-- Per-piece Sell --}}
+                    <div class="sm:col-span-1 lg:col-span-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Selling Price (per piece)</label>
+                        <input type="text" name="products[0][price]"  class="per-piece-sell w-full bg-gray-100 border-gray-300 rounded px-3 py-2 text-gray-600 text-sm">
+                    </div>
+
+                    {{-- Profit Margin Display --}}
+                    <div class="sm:col-span-2 lg:col-span-12 mt-2 profit-display hidden">
+                        <div class="bg-blue-50 border border-blue-200 rounded p-3 text-sm">
+                            <div class="flex flex-wrap gap-4 justify-between items-center">
+                                <div>
+                                    <span class="font-medium text-gray-700">Profit per piece:</span>
+                                    <span class="profit-amount text-blue-700 font-bold ml-2"></span>
+                                </div>
+                                <div>
+                                    <span class="font-medium text-gray-700">Margin:</span>
+                                    <span class="profit-margin text-green-700 font-bold ml-2"></span>
+                                </div>
+                                <div>
+                                    <span class="font-medium text-gray-700">Total Profit:</span>
+                                    <span class="total-profit text-purple-700 font-bold ml-2"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-6 flex flex-col sm:flex-row justify-between gap-4">
+            <button type="button" id="add-product" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded shadow text-sm font-medium">
+                + Add Another Product
+            </button>
+            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-8 py-2 rounded shadow text-sm font-medium">
+                Upload Inventory
+            </button>
+        </div>
+    </form>
+</div>
+
+{{-- Barcode Scanner Modal --}}
+<div id="scanner-modal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50 p-4">
+    <div class="bg-white p-6 rounded-lg shadow-lg relative max-w-md w-full">
+        <video id="barcode-video" class="w-full h-64 border rounded bg-gray-900" autoplay></video>
+        <button id="close-scanner" class="absolute top-2 right-2 text-2xl text-gray-600 hover:text-black bg-white rounded-full w-8 h-8 flex items-center justify-center">&times;</button>
+        <p class="text-sm text-gray-500 mt-3 text-center">Point your camera at the barcode</p>
+        <p id="scanner-feedback" class="text-sm text-red-600 mt-2 text-center min-h-5"></p>
+    </div>
+</div>
+
+<script src="https://unpkg.com/@zxing/library@latest"></script>
+<script>
+    const UNIT_QUANTITIES = {
+        'piece': 1,
+        'dozen': 12,
+        'carton': 24
+    };
+
+    const UNIT_LABELS = {
+        'piece': '',
+        'dozen': '(for 12 pieces)',
+        'carton': '(for 24 pieces)'
+    };
+
+    const parseNumber = val => parseFloat(String(val).replace(/,/g, '')) || 0;
+    const formatNumber = val => {
+        const num = parseFloat(val);
+        return isNaN(num) ? '' : num.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    };
+
+    let productIndex = 1;
+    let scannerActive = false;
+    let selectedSkuInput = null;
+    const codeReader = new ZXing.BrowserBarcodeReader();
+
+  function updatePerPiecePrices(container) {
+    const unit = container.querySelector('.unit-select').value;
+    const unitsInBulk = UNIT_QUANTITIES[unit];
+    const qty = parseFloat(container.querySelector('.quantity-input')?.value || '0');
+    const bulkPurchase = parseNumber(container.querySelector('.bulk-purchase')?.value || '0');
+    const bulkSell = parseNumber(container.querySelector('.bulk-sell')?.value || '0');
+
+    let perPurchase = 0;
+    let perSell = 0;
+
+    const totalPieces = unit === 'piece' ? qty : qty * unitsInBulk;
+
+    if (unit === 'piece') {
+        perPurchase = bulkPurchase;
+        perSell = bulkSell;
+    } else if (totalPieces > 0) {
+        perPurchase = bulkPurchase / totalPieces;
+        perSell = bulkSell / totalPieces;
+    }
+
+    container.querySelector('.per-piece-purchase').value = perPurchase > 0 ? formatNumber(perPurchase) : '';
+    container.querySelector('.per-piece-sell').value = perSell > 0 ? formatNumber(perSell) : '';
+
+    updateProfitDisplay(container, perPurchase, perSell, totalPieces);
+}
+
+function toggleBulkFields(container) {
+    const unit = container.querySelector('.unit-select').value;
+    const quantityInput = container.querySelector('.quantity-input');
+    const isPiece = unit === 'piece';
+
+    // Show/hide bulk groups
+    container.querySelectorAll('.bulk-group').forEach(group => {
+        group.classList.toggle('hidden', isPiece);
+    });
+
+    // Clear bulk price inputs when unit is piece
+    if (isPiece) {
+        container.querySelector('.bulk-purchase').value = '';
+        container.querySelector('.bulk-sell').value = '';
+    }
+
+    // Enable quantity input only if unit is piece
+    quantityInput.disabled = !isPiece;
+}
+
+    function updateProfitDisplay(container, perPurchase, perSell, totalPieces) {
+        const profitDisplay = container.querySelector('.profit-display');
+
+        if (perPurchase > 0 && perSell > 0) {
+            const profitPerPiece = perSell - perPurchase;
+            const margin = ((profitPerPiece / perSell) * 100);
+            const totalProfit = profitPerPiece * totalPieces;
+
+            container.querySelector('.profit-amount').textContent = formatNumber(profitPerPiece);
+            container.querySelector('.profit-margin').textContent = margin.toFixed(1) + '%';
+            container.querySelector('.total-profit').textContent = formatNumber(totalProfit);
+
+            profitDisplay.classList.remove('hidden');
+        } else {
+            profitDisplay.classList.add('hidden');
+        }
+    }
+
+
+
+   function formatCurrencyInput(input) {
+    let raw = input.value.replace(/[^0-9.]/g, '');
+
+    const parts = raw.split('.');
+    if (parts.length > 2) raw = parts[0] + '.' + parts.slice(1).join('');
+
+    if (parts[1] && parts[1].length > 2) {
+        raw = parts[0] + '.' + parts[1].substring(0, 2);
+    }
+
+    let [intPart, decPart] = raw.split('.');
+    intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+    input.value = decPart !== undefined ? intPart + '.' + decPart : intPart;
+}
+
+
+    function bindProductEvents(container) {
+        const unitSelect = container.querySelector('.unit-select');
+        const bulkInputs = container.querySelectorAll('.bulk-purchase, .bulk-sell');
+        const quantityInput = container.querySelector('.quantity-input');
+        const skuInput = container.querySelector('.sku-input');
+        const scanBtn = container.querySelector('.scan-btn');
+        const removeBtn = container.querySelector('.remove-product');
+
+        unitSelect.addEventListener('change', () => {
+            toggleBulkFields(container);
+            updatePerPiecePrices(container);
+        });
+
+      bulkInputs.forEach(input => {
+    input.addEventListener('input', () => {
+        formatCurrencyInput(input);
+        updatePerPiecePrices(container);
+    });
+
+    input.addEventListener('blur', () => {
+        formatCurrencyInput(input);
+        updatePerPiecePrices(container);
+    });
+});
+
+        quantityInput.addEventListener('input', () => updatePerPiecePrices(container));
+
+        scanBtn.addEventListener('click', () => {
+            selectedSkuInput = skuInput;
+            document.getElementById('scanner-modal').classList.remove('hidden');
+            document.getElementById('scanner-modal').style.display = 'flex';
+            startScanner();
+        });
+
+        removeBtn.addEventListener('click', () => {
+            container.remove();
+            updateRemoveButtons();
+        });
+
+        toggleBulkFields(container);
+        updatePerPiecePrices(container);
+    }
+
+    function updateRemoveButtons() {
+        const items = document.querySelectorAll('.product-item');
+        items.forEach((item, index) => {
+            const btn = item.querySelector('.remove-product');
+            btn.disabled = items.length === 1;
+        });
+    }
+
+    document.getElementById('add-product').addEventListener('click', () => {
+        const template = document.querySelector('.product-item');
+        const clone = template.cloneNode(true);
+        clone.setAttribute('data-index', productIndex);
+
+        clone.querySelectorAll('input, select').forEach(input => {
+            const name = input.getAttribute('name');
+            if (name) input.setAttribute('name', name.replace(/\[\d+\]/, `[${productIndex}]`));
+            if (!input.classList.contains('unit-select') && !input.hasAttribute('readonly')) {
+                input.value = '';
+            }
+            input.disabled = false;
+        });
+
+        clone.querySelector('.unit-select').value = 'piece';
+        clone.querySelectorAll('.bulk-group').forEach(g => g.classList.add('hidden'));
+        clone.querySelector('.profit-display').classList.add('hidden');
+
+        document.getElementById('products-container').appendChild(clone);
+        bindProductEvents(clone);
+        updateRemoveButtons();
+        productIndex++;
+    });
+
+    function startScanner() {
+        if (scannerActive) return;
+        scannerActive = true;
+        document.getElementById('scanner-feedback').textContent = 'Initializing camera...';
+
+        codeReader.decodeFromConstraints({ video: { facingMode: "environment" } }, 'barcode-video', handleScan)
+            .catch(() => {
+                codeReader.decodeFromVideoDevice(null, 'barcode-video', handleScan)
+                    .catch(err => {
+                        document.getElementById('scanner-feedback').textContent = "Camera error: " + err.message;
+                        stopScanner();
+                    });
+            });
+    }
+
+    function handleScan(result, err) {
+        if (result) {
+            codeReader.reset();
+            scannerActive = false;
+            stopScanner();
+            if (selectedSkuInput) {
+                selectedSkuInput.value = result.text;
+                selectedSkuInput.focus();
+            }
+            try {
+                new Audio('/sounds/beep.mp3').play().catch(() => {});
+            } catch (e) {}
+        } else if (err && !(err instanceof ZXing.NotFoundException)) {
+            document.getElementById('scanner-feedback').textContent = 'Error: ' + err.message;
+        } else {
+            document.getElementById('scanner-feedback').textContent = 'Scanning...';
+        }
+    }
+
+    function stopScanner() {
+        if (scannerActive) {
+            codeReader.reset();
+            scannerActive = false;
+        }
+        document.getElementById('scanner-modal').classList.add('hidden');
+        document.getElementById('scanner-modal').style.display = 'none';
+        document.getElementById('scanner-feedback').textContent = '';
+    }
+
+    document.getElementById('close-scanner').addEventListener('click', stopScanner);
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.product-item').forEach(container => bindProductEvents(container));
+        updateRemoveButtons();
+    });
+</script>
+
+<style>
+    @media (max-width: 640px) {
+        .product-item {
+            padding: 1rem;
+        }
+
+        button {
+            width: 100%;
+        }
+
+        .lg\:col-span-1 button {
+            width: auto;
+        }
+    }
+</style>
+@endsection
