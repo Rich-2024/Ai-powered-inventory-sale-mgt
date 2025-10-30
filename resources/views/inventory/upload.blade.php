@@ -35,28 +35,41 @@
         </a>
 
         <!-- Upload Form -->
-        <form id="uploadForm" enctype="multipart/form-data" class="flex items-center gap-2 w-full sm:w-auto max-w-xs sm:max-w-none" novalidate>
-          <input
-            type="file"
-            name="inventoryFile"
-            id="inventoryFile"
-            required
-            class="border border-gray-300 rounded px-3 py-2 w-full sm:w-auto text-sm sm:text-base"
-            aria-label="Select inventory file to upload"
-          />
-       <button
-  type="submit"
-  class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded transition font-semibold"
->
-  <!-- Upload icon -->
-  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-  </svg>
-  Upload
-</button>
+    <!-- Make sure CSRF token is included -->
+<form action="{{ route('inventory.bulk.upload') }}"
+      method="POST"
+      enctype="multipart/form-data"
+      class="flex items-center gap-2 w-full sm:w-auto max-w-xs sm:max-w-none">
 
-        </form>
+    @csrf
+
+    <input
+        type="file"
+        name="inventory_file"
+        accept=".csv"
+        required
+        class="border border-gray-300 rounded px-3 py-2 w-full sm:w-auto text-sm sm:text-base"
+        aria-label="Select inventory file to upload"
+    />
+
+    <button
+        type="submit"
+        class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700
+               disabled:bg-blue-400 disabled:cursor-not-allowed text-white
+               px-4 py-2 rounded transition font-semibold">
+        Upload
+    </button>
+</form>
+
+<!-- Optional status message -->
+@if(session('message'))
+    <p class="mt-3 text-sm text-gray-600">{{ session('message') }}</p>
+@endif
+
+
+<!-- For status message -->
+<p id="uploadStatus" class="mt-3 text-sm text-gray-600"></p>
+
       </div>
     </div>
 
@@ -66,65 +79,6 @@
     </div>
   </div>
 </div>
-
-<script>
-  (function() {
-    const form = document.getElementById('uploadForm');
-    const fileInput = document.getElementById('inventoryFile');
-    const messageEl = document.getElementById('message');
-    const uploadButton = form.querySelector('button[type="submit"]');
-
-    form.addEventListener('submit', async function(e) {
-      e.preventDefault();
-
-      messageEl.classList.add('hidden');
-      messageEl.textContent = '';
-      messageEl.classList.remove('text-green-600', 'text-red-600');
-
-      if (!fileInput.files.length) {
-        messageEl.textContent = 'Please select a file to upload.';
-        messageEl.classList.remove('hidden');
-        messageEl.classList.add('text-red-600');
-        return;
-      }
-
-      uploadButton.disabled = true;
-      uploadButton.textContent = 'Uploading...';
-
-      const formData = new FormData();
-      formData.append('inventoryFile', fileInput.files[0]);
-
-      try {
-        const response = await fetch('{{ route("inventory.bulk.upload") }}', {
-          method: 'POST',
-          headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-          },
-          body: formData,
-        });
-
-        if (response.ok) {
-          messageEl.textContent = 'Inventory Upload Successful!';
-          messageEl.classList.add('text-green-600');
-          fileInput.value = '';
-        } else {
-          const errorData = await response.json().catch(() => null);
-          messageEl.textContent = errorData?.message || 'Upload failed. Please try again.';
-          messageEl.classList.add('text-red-600');
-        }
-      } catch (err) {
-        console.error('Upload error:', err);
-        messageEl.textContent = 'An error occurred during upload.';
-        messageEl.classList.add('text-red-600');
-      } finally {
-        messageEl.classList.remove('hidden');
-        uploadButton.disabled = false;
-        uploadButton.textContent = 'Upload';
-      }
-    });
-  })();
-</script>
-
     <!-- Main Content -->
     <div class="w-full px-4 sm:px-6 lg:px-8">
         <div class="max-w-7xl mx-auto">

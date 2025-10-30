@@ -57,9 +57,11 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 */
 //journall
 
+
 Route::get('/inventory/template/download', [InventoryController::class, 'downloadTemplate'])->name('inventory.template.download');
 
-Route::post('/inventory/bulk-upload', [InventoryController::class, 'bulkUpload'])->name('inventory.bulk.upload');
+Route::post('/inventory/bulk/upload', [InventoryController::class, 'bulkUpload'])
+    ->name('inventory.bulk.upload');
 
 Route::get('/inventory/download/template', [InventoryController::class, 'downloadTemplate'])->name('inventory.download.template');
 

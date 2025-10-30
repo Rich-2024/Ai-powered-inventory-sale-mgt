@@ -597,35 +597,31 @@ public function downloadTemplate(): StreamedResponse
 }
 public function bulkUpload(Request $request)
 {
-    dd($request->all());
     $request->validate([
-        'inventoryFile' => 'required|file|mimes:csv,txt|max:2048',
+        'inventory_file' => 'required|file|mimes:csv,txt|max:2048',
     ]);
 
-    $path = $request->file('inventoryFile')->getRealPath();
-    $handle = fopen($path, 'r');
+    $path = $request->file('inventory_file')->getRealPath();
+    $rows = array_map('str_getcsv', file($path));
 
     // Skip the header row
-    $header = fgetcsv($handle);
-
-    while (($row = fgetcsv($handle)) !== false) {
-        // Map CSV columns to variables
+    foreach (array_slice($rows, 1) as $row) {
         [$sku, $name, $quantity, $unit, $purchasePrice, $sellingPrice] = $row;
 
-        // Save to database (adjust to your model structure)
-        Inventory::create([
-            'sku'            => $sku,
-            'name'           => $name,
-            'quantity'       => $quantity,
-            'unit'           => $unit,
-            'purchase_price' => $purchasePrice,
-            'selling_price'  => $sellingPrice,
-        ]);
+        Inventory::updateOrCreate(
+            ['sku' => $sku],
+            [
+                'name'           => $name,
+                'quantity'       => $quantity,
+                'unit'           => $unit,
+                'purchase_price' => $purchasePrice,
+                'selling_price'  => $sellingPrice,
+            ]
+        );
     }
-
-    fclose($handle);
 
     return back()->with('success', 'Bulk inventory uploaded successfully.');
 }
+
 
 }
